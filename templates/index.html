@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armed-Bot</title>
+    <style>
+        /* General styles */
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: linear-gradient(to bottom right, #4e54c8, #8f94fb);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+
+        .chat-container {
+            width: 400px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            color: #333;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 80px;
+            height: 80px;
+            border-radius: 80px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4e54c8;
+        }
+
+        .chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f900;
+        }
+
+        .message {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: #4e54c8;
+            color: #fff;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot-message {
+            background-color: #ccc;
+            color: #333;
+            margin-right: auto;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: none;
+            font-size: 16px;
+            min-height: 100px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Smooth scrolling */
+        .chat-history {
+            scroll-behavior: smooth;
+        }
+
+        .footer {
+    background: #7f00ff;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+}
+
+.footer p {
+    margin: 0;
+}
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="logo">
+            <img src="{{url_for('static',filename='Saiyam.jpeg')}}" alt="Chatbot Logo">
+        </div>
+        <h2>Armed-Bot</h2>
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history will appear here -->
+        </div>
+        <form id="userForm">
+            <div class="input-field">
+                <textarea id="query" name="query" placeholder="Ask something..." required></textarea>
+            </div>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Armed-Bot. All Rights Reserved.</p>
+        <p>Made by Saiyam Kumar Biswas</p>
+
+    </div>
+
+    <script>
+        // Function to format markdown text
+        function formatMarkdown(text) {
+            // Bold formatting
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Headings
+            text = text.replace(/^# (.*)/gm, '<h2>$1</h2>');
+            text = text.replace(/^## (.*)/gm, '<h3>$1</h3>');
+            
+            // Unordered lists
+            text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
+            text = text.replace(/((<li>.*<\/li>\n?)+)/g, function(match) {
+                return '<ul>' + match + '</ul>';
+            });
+            
+            // Newlines to <br>
+            text = text.replace(/\n/g, '<br>');
+            
+            return text;
+        }
+    
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+    
+            const query = document.getElementById('query').value;
+            if (query.trim() === '') return;
+    
+            // Add user message to chat history
+            addMessage(query, 'user');
+    
+            // Clear the input field
+            document.getElementById('query').value = '';
+    
+            // Send the query to the server
+            fetch('/chat', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    'query': query
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Add bot's response to chat history with markdown formatting
+                addMessage(data.response, 'bot');
+            })
+            .catch(error => {
+                // In case of error, display a fallback message
+                addMessage("Sorry, there was an error. Please try again.", 'bot');
+            });
+        });
+    
+        // Function to add message to the chat history
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+            
+            // Use innerHTML to render formatted markdown
+            messageDiv.innerHTML = sender === 'bot' ? formatMarkdown(message) : message;
+            
+            document.getElementById('chatHistory').appendChild(messageDiv);
+    
+            // Scroll to the latest message
+            document.getElementById('chatHistory').scrollTop = document.getElementById('chatHistory').scrollHeight;
+        }
+    </script>
+    </body>
+</html>
